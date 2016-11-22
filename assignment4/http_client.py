@@ -7,7 +7,7 @@ __author__ = "jasvinder"
 
 
 # create an INET, STREAMING socket
-# input: 
+# input:
 #   url:String - takes the valid url to make tcp connection
 #   port: Integer - take the port number to connect
 # output:
@@ -21,17 +21,17 @@ def tcp_connection(url, port):
 
 
 # Parses the URL into six components.i.e scheme, network location, path, parameters, query and fragment
-# input: 
+# input:
 #   url_name:String - takes the valid url passed
-#   output:
-#     String - parsed Url into 6 components
+# output:
+#   String - parsed Url into 6 components
 
 def parse_url(url_name):
   return urlparse(url_name)
 
 # User request for sending user input URL as HTTP request ending with two empty lines
 # input:
-#   url_name:String - takes the valid url passed 
+#   url_name:String - takes the valid url passed
 #   method_type:String - takes Http method type,i.e generally, POST or GET
 # output:
 #   get_request:String - returns the valid Http Request according to method type
@@ -41,11 +41,11 @@ def encode_http_request(path, method_type):
   get_request = ''.join([method_type,' ', path,' ',protocol_type, '\r','\n','\r','\n'])
   return get_request
 
-# Sends the Http Request 
+# Sends the Http Request
 # input:
 #   tcp_connection:TCP Socket object - takes the object of the TCP connection established
 #   http_request:String - takes the valid Http Request according to method type i.e GET or POST method
-# output: 
+# output:
 #   Bytes: returns the Http request made in bytes to send it further for communication
 def send_http_request(tcp_connection, http_request):
   return tcp_connection.send(str.encode(http_request))
@@ -62,39 +62,42 @@ def receive_http_body_as_text(tcp_connection):
 
 def read_http_header(tcp_connection):
   http_headers = []
-  response = tcp_connection.recv(4).decode('utf-8')
-  http_headers.append(response)
   while(True):
+    response = tcp_connection.recv(1).decode('utf-8')
     if(response == '\r'):
+      http_headers.append(response)
       response = tcp_connection.recv(3).decode('utf-8')
       if(response == '\n\r\n'):
+        http_headers.append(response)
         break
       else:
-        http_headers.append('\r')
         http_headers.append(response)
-    response = tcp_connection.recv(1).decode('utf-8')
-    http_headers.append(response)
+
+    else:
+      http_headers.append(response)
   return ''.join(http_headers)
-  
+
 def read_http_body_as_binary(tcp_connection):
-  http_headers = []
-  response = tcp_connection.recv(512)
+  http_body = []
+  response = tcp_connection.recv(1024)
   while(response):
-    http_headers.append(response)
-    response = tcp_connection.recv(512)
-    #http_headers.append(response)
-  return http_headers
+    http_body.append(response)
+    response = tcp_connection.recv(1024)
+    #http_body.append(response)
+  return http_body
 
 def decode_http_header(http_header):
-  return http_header.split('\r\n')
+  return http_header.strip().split('\r\n')
   # { value.split(':')[0] : value.split(':')[1] for value in http_header.split('\r\n')}
 
 def find_content_type(decoded_http_header):
+  #print(decoded_http_header)
   for value in decoded_http_header:
-    if(value.startswith('Content-Type: text/html')):
-      return 'text'
-    else:
-      return 'binary'
+    if(value.startswith('Content-Type:')):
+      if(value.startswith('Content-Type: text/html')):
+        return 'text'
+      else:
+        return 'binary'
 
 
 def save_text_data(string_data_to_be_written, file_name):
@@ -110,7 +113,7 @@ def save_binary_data(binary_data_array_to_be_written, file_name):
 
 
 #Sending data from client to server
-def http_server(url_name):
+def http_server(url_name, saveheader = True):
   parsed_url = parse_url(url_name)
   tcp_socket = tcp_connection(parsed_url.netloc, 80)
   http_request = encode_http_request(parsed_url.path, 'GET')
@@ -118,10 +121,15 @@ def http_server(url_name):
   http_header = read_http_header(tcp_socket)
   http_data = read_http_body_as_binary(tcp_socket)
   decoded_message = decode_http_header(http_header)
-  save_text_data(http_header, 'index.php.header')
+  file_name = parsed_url.path.split('/')[-1]
+  if saveheader:
+    header_file_name = file_name +  '.header'
+    save_text_data(http_header, header_file_name)
   if(find_content_type(decoded_message) == 'text'):
-    save_text_data(http_data, 'index.php')
+    text_file_name = file_name + '.html'
+    save_binary_data(http_data, text_file_name)
   elif(find_content_type(decoded_message) == 'binary'):
-    save_binary_data(http_data, 'index.jpg')
+    save_binary_data(http_data, file_name)
   tcp_socket.close()
-http_server(sys.argv[1])
+if __name__ == "__main__":
+  http_server(sys.argv[1])
