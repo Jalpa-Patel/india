@@ -3,10 +3,8 @@ from urllib.parse import urlparse
 import sys
 __author__ = "jasvinder"
 
-# gets URL from use
 
-
-# create an INET, STREAMING socket
+# creates an INET, STREAMING socket
 # input:
 #   url:String - takes the valid url to make tcp connection
 #   port: Integer - take the port number to connect
@@ -17,15 +15,11 @@ def tcp_connection(url, port):
   clientSocket.connect((url, port))
   return clientSocket
 
-
-
-
 # Parses the URL into six components.i.e scheme, network location, path, parameters, query and fragment
 # input:
 #   url_name:String - takes the valid url passed
 # output:
 #   String - parsed Url into 6 components
-
 def parse_url(url_name):
   return urlparse(url_name)
 
@@ -35,7 +29,6 @@ def parse_url(url_name):
 #   method_type:String - takes Http method type,i.e generally, POST or GET
 # output:
 #   get_request:String - returns the valid Http Request according to method type
-
 def encode_http_request(path, method_type):
   protocol_type = 'HTTP/1.0'
   get_request = ''.join([method_type,' ', path,' ',protocol_type, '\r','\n','\r','\n'])
@@ -50,16 +43,11 @@ def encode_http_request(path, method_type):
 def send_http_request(tcp_connection, http_request):
   return tcp_connection.send(str.encode(http_request))
 
-# Receives the Http Response
-def receive_http_body_as_text(tcp_connection):
-  total_http_response_data = []
-  http_response = tcp_connection.recv(512).decode('utf-8')
-  total_http_response_data.append(http_response)
-  while(http_response):
-    http_response = tcp_connection.recv(512).decode('utf-8')
-    total_http_response_data.append(http_response)
-  return ''.join(total_http_response_data)
-
+# Reads the Http header of the response
+# input:
+#   tcp_connection:TCP Socket object - takes the object of the TCP connection established
+#output:
+#   http_headers: String - gives the HTTP header of the response
 def read_http_header(tcp_connection):
   http_headers = []
   while(True):
@@ -77,6 +65,26 @@ def read_http_header(tcp_connection):
       http_headers.append(response)
   return ''.join(http_headers)
 
+# Reads the body of the Http response
+# input:
+#   tcp_connection:TCP Socket object - takes the object of the TCP connection established
+#output:
+#    total_http_response_data: array - gives the http body of the response, as text
+
+def receive_http_body_as_text(tcp_connection):
+  total_http_response_data = []
+  http_response = tcp_connection.recv(512).decode('utf-8')
+  total_http_response_data.append(http_response)
+  while(http_response):
+    http_response = tcp_connection.recv(512).decode('utf-8')
+    total_http_response_data.append(http_response)
+  return ''.join(total_http_response_data)
+
+# Reads the body of the Http response
+# input:
+#   tcp_connection:TCP Socket object - takes the object of the TCP connection established
+#output:
+#   http_body: array - gives the body of the Http response, as binary data
 def read_http_body_as_binary(tcp_connection):
   http_body = []
   response = tcp_connection.recv(1024)
@@ -88,7 +96,6 @@ def read_http_body_as_binary(tcp_connection):
 
 def decode_http_header(http_header):
   return http_header.strip().split('\r\n')
-  # { value.split(':')[0] : value.split(':')[1] for value in http_header.split('\r\n')}
 
 def find_content_type(decoded_http_header):
   #print(decoded_http_header)

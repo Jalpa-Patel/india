@@ -1,5 +1,6 @@
 import re
-from http_client import parse_url
+import sys
+import http_client
 def read_data(file_name):
   with open(file_name, 'r') as f:
      data = f.read()
@@ -12,24 +13,34 @@ def match_img_src(html):
 
 
 def make_absolute_url(url_list, url):
-  parse_url(url)
-  parsed_url = []
+  downloaded_domain = http_client.parse_url(url).netloc
+  complete_url = []
   for url in url_list:
-    parsed_url.append( parse_url(url_list))
-  return parsed_url
+    parsed_url = http_client.parse_url(url)
+#    parsed_url.append(http_client.parse_url(url_list))
+    if(parsed_url.netloc):
+      complete_url.append(url)
+    else:
+      complete_url.append('http://' + downloaded_domain + url )
+  return complete_url
 
 
 
 def print_all_url_links(file_name):
   html_data = read_data(file_name)
   url_list = match_img_src(html_data)
-  print(url_list)
   return url_list
 
-file_name = '/home/jass/WebScience/india/assignment4/introduction-to-web-science.html'
-url = "http://west.uni-koblenz.de/en/studying/courses/ws1617/introduction-to-web-science"
 
-url_list = print_all_url_links(file_name)
+def download_urls(file_name,url):
+  url_list = print_all_url_links(file_name)
+  full_url_list = make_absolute_url(url_list, url)
+  print(full_url_list)
+  for url in full_url_list:
+    http_client.http_server(url, False)
 
-parsed_url = make_absolute_url(url_list, url)
-print(parsed_url)
+
+
+
+if __name__ == "__main__":
+  download_urls(sys.argv[1], sys.argv[2])
