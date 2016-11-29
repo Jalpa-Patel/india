@@ -1,0 +1,26 @@
+<html>
+<head>
+	<title>Abusing the HTTP protocol - Example</title>
+</head>
+<body>
+	<h1>Display data from the Server without page reload</h1>
+	New message from the server : <br>
+	<span id="response_message" style="color:blue">
+		This will be replaced by messages from the server
+	</span>
+	<script>
+	  var response = document.getElementById('response_message')
+	  function reqListener () {
+	    response.innerHTML = this.responseText;
+	  }
+	  function createRequest() {
+	    var oReq = new XMLHttpRequest();
+	    oReq.addEventListener("load", reqListener);
+	    oReq.open("GET", "http://localhost:8080/server_message");
+	    oReq.send();
+	  }
+	  setInterval(createRequest, 1000);
+ 	 </script>
+
+</body>
+</html>
