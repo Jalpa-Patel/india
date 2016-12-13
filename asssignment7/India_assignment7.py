@@ -75,7 +75,7 @@ if __name__ == '__main__':
   green_line, = plt.loglog(x_g2, y_g2, "g-", label="zipf probability generated")
   plt.legend(handles=[red_line, blue_line, green_line],
   fontsize = 8, framealpha = 0.85, frameon = True )
-  #plt.show()
+  plt.show()
 
   plt.title(
   "cumulated plots of Rank frequency plot of wiki and two generated texts.")
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
   plt.legend( handles = [red_line, blue_line, green_line],
   fontsize = 8, framealpha = 0.85, frameon = True )
-  #plt.show()
+  plt.show()
 
   smirnov_uniform = find_norm(cdf_y_wiki, cdf_y_g1)
   smirnov_zipf = find_norm(cdf_y_wiki, cdf_y_g2)
